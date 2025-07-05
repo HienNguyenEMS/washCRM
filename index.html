@@ -1,340 +1,533 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebApp Quản lý Xưởng Giặt - Bình Mai</title>
-    
-    <!-- Bootstrap CSS -->
+
+    <!-- Libraries -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Custom CSS -->
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 90px;
+            --header-height: 70px;
+            --bs-primary-rgb: 13, 110, 253;
+            --bs-body-font-family: 'Be Vietnam Pro', sans-serif;
+            --bs-body-bg: #f8f9fc;
+        }
+
+        body {
+            transition: padding-left 0.3s ease;
+            padding-left: var(--sidebar-width);
+        }
         .wrapper { display: flex; width: 100%; align-items: stretch; }
-        #sidebar { display: flex; flex-direction: column; min-width: 260px; max-width: 260px; background: #212529; color: #fff; transition: all 0.3s; }
-        #sidebar.active { margin-left: -260px; }
-        #sidebar .sidebar-header { padding: 20px; background: #000; text-align: center; }
-        #sidebar ul.components { padding: 15px 0; flex-grow: 1; }
-        #sidebar ul li a { padding: 15px 20px; font-size: 1.05em; display: block; color: #adb5bd; border-left: 4px solid transparent; text-decoration: none; transition: all 0.2s; }
+        #content { width: 100%; padding: 0; min-height: 100vh; transition: all 0.3s ease; }
+
+        /* --- SIDEBAR --- */
+        #sidebar { display: flex; flex-direction: column; width: var(--sidebar-width); background: #212529; color: #fff; transition: all 0.3s ease; z-index: 1032; position: fixed; top: 0; left: 0; height: 100vh; }
+        #sidebar .sidebar-header { height: var(--header-height); display: flex; align-items: center; justify-content: flex-start; gap: 15px; padding: 0 15px; background: #000; flex-shrink: 0; }
+        #sidebar .sidebar-header .logo-container { text-decoration: none; color: white; display: flex; align-items: center; overflow: hidden; }
+        #sidebar .sidebar-header .logo { height: 40px; transition: 0.3s; flex-shrink: 0; }
+        #sidebar .sidebar-header .logo-text { margin-left: 10px; font-weight: 700; font-size: 1.5rem; white-space: nowrap; transition: opacity 0.2s, width 0.2s, margin-left 0.2s; }
+        #sidebar ul.components { padding: 15px 0; flex-grow: 1; overflow-y: auto; }
+        #sidebar ul li a { padding: 12px 20px; font-size: 0.95rem; display: flex; align-items: center; color: #adb5bd; border-left: 4px solid transparent; text-decoration: none; transition: all 0.2s ease; white-space: nowrap; }
         #sidebar ul li a:hover { color: #fff; background: #343a40; }
-        #sidebar ul li.active > a, a[aria-expanded="true"] { color: #fff; background: #0d6efd; border-left-color: #f8f9fa; }
-        #sidebar .sidebar-footer { padding: 15px; background: #343a40; }
-        #sidebar .sidebar-footer a { color: #adb5bd; text-decoration: none; display: block; text-align: center; }
-        #sidebar .sidebar-footer a:hover { color: #fff; }
-        .permission-matrix .form-check { padding-top: 5px; padding-bottom: 5px; }
-        .permission-matrix th { background-color: #f8f9fa; }
-        #content { width: 100%; padding: 20px; min-height: 100vh; transition: all 0.3s; }
-        .main-content { display: none; }
-        .main-content.active { display: block; animation: fadeIn 0.5s; }
+        #sidebar ul li.active > a, a[data-bs-toggle="collapse"][aria-expanded="true"] { color: #fff; font-weight: 600; }
+        #sidebar ul li.active > a { background: #0d6efd; border-left-color: #f8f9fa; }
+        #sidebar ul li a .fa-fw { transition: margin 0.3s ease; font-size: 1.1rem; width: 30px; }
+        #sidebar a[data-bs-toggle="collapse"] .collapse-icon { margin-left: auto; transition: transform 0.3s ease; font-size: 0.8rem; }
+        #sidebar a[data-bs-toggle="collapse"][aria-expanded="true"] .collapse-icon { transform: rotate(-180deg); }
+        #sidebar .collapse a { padding-left: calc(20px + 30px); font-size: 0.9rem; background: rgba(0,0,0,0.2); }
+        #sidebar .collapse a.active { background: rgba(13, 110, 253, 0.3); }
+
+        /* --- SIDEBAR COLLAPSED --- */
+        body.sidebar-collapsed { padding-left: var(--sidebar-collapsed-width); }
+        body.sidebar-collapsed #sidebar { width: var(--sidebar-collapsed-width); }
+        body.sidebar-collapsed #sidebar .sidebar-header { justify-content: center; }
+        body.sidebar-collapsed #sidebar .sidebar-header .logo-text { opacity: 0; width: 0; margin-left: 0;}
+        body.sidebar-collapsed #sidebar .nav-link span,
+        body.sidebar-collapsed #sidebar .collapse-icon { opacity: 0; width: 0; height: 0; overflow: hidden; white-space: nowrap; }
+        body.sidebar-collapsed #sidebar .nav-link { justify-content: center; padding-left: 10px; padding-right: 10px; }
+        body.sidebar-collapsed #sidebar .fa-fw { margin-right: 0 !important; font-size: 1.5rem; }
+        body.sidebar-collapsed #sidebar .collapse.show { display: none; }
+
+        
+        @media (max-width: 768px) {
+            body {
+                padding-left: 0 !important;
+            }
+            #sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 1050;
+            }
+            body.sidebar-collapsed #sidebar {
+                transform: translateX(0);
+            }
+        }
+
+        /* --- HEADER & MAIN CONTENT --- */
+        .main-header { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background-color: #fff; border-bottom: 1px solid #e3e6f0; position: sticky; top: 0; z-index: 1020; }
+        .main-content.active { animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1); border: 1px solid #e3e6f0; }
+        .card-header { font-weight: 600; color: var(--bs-primary); }
+
+        /* --- KANBAN BOARD --- */
+        .kanban-container { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
+        .kanban-column { flex: 0 0 320px; scroll-snap-align: start; background-color: #f1f2f6; border-radius: 0.5rem; padding: 0.75rem; }
+        .kanban-column h5 { font-size: 1rem; font-weight: 600; padding: 0.5rem; }
+        .kanban-card { cursor: grab; }
+        .kanban-card .card-footer { background-color: transparent; border-top: 1px solid #e3e6f0; }
+
+        /* --- Scan Modal Camera --- */
+        #scan-camera-feed { width: 100%; max-height: 250px; background-color: #111; border: 1px solid #444; border-radius: 0.25rem; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
-    <!-- ============================================= -->
-    <!-- SIDEBAR (UPDATED) -->
-    <!-- ============================================= -->
     <nav id="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <h3>Xưởng Wash Bình Mai</h3>
-            </div>
-            <ul class="list-unstyled components">
-                <li class="active"><a href="#" class="nav-link" data-target="#dashboard-content"><i class="fas fa-tachometer-alt fa-fw me-2"></i>Tổng quan</a></li>
-                <li><a href="#" class="nav-link" data-target="#orders-content"><i class="fas fa-file-invoice-dollar fa-fw me-2"></i>Quản lý Đơn hàng</a></li>
-                <li><a href="#" class="nav-link" data-target="#production-content"><i class="fas fa-industry fa-fw me-2"></i>Theo dõi Sản xuất</a></li>
-                <li><a href="#" class="nav-link" data-target="#payroll-content"><i class="fas fa-hand-holding-usd fa-fw me-2"></i>Lương sản phẩm</a></li>
-                <li><a href="#" class="nav-link" data-target="#finance-content"><i class="fas fa-chart-pie fa-fw me-2"></i>Thu - Chi</a></li>
-                <li><a href="#" class="nav-link" data-target="#delivery-content"><i class="fas fa-truck fa-fw me-2"></i>Giao hàng</a></li>
-                
-                <!-- NEW: System Settings collapsible menu -->
-                <li>
-                    <a href="#settingsSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle"><i class="fas fa-cogs fa-fw me-2"></i>Cài đặt hệ thống</a>
-                    <ul class="collapse list-unstyled" id="settingsSubmenu">
-                        <li><a href="#" class="nav-link" data-target="#master-data-content"><i class="fas fa-database fa-fw me-2"></i>Dữ liệu nguồn</a></li>
-                        <li><a href="#" class="nav-link" data-target="#users-content"><i class="fas fa-users-cog fa-fw me-2"></i>Quản lý Người dùng</a></li>
-                        <li><a href="#" class="nav-link" data-target="#roles-content"><i class="fas fa-user-shield fa-fw me-2"></i>Phân quyền & Vai trò</a></li>
-                    </ul>
-                </li>
-            </ul>
+        <div class="sidebar-header">
+            <button class="btn btn-dark" type="button" id="sidebar-toggle-btn"><i class="fas fa-bars"></i></button>
+            <a href="#" class="logo-container nav-link" data-view="dashboard">
+                <img src="https://gpems.net/_next/image?url=%2Flogo-ico.png&w=64&q=75" alt="Logo" class="logo">
+                <span class="logo-text">Xưởng Wash</span>
+            </a>
         </div>
-        <!-- NEW: Sidebar Toggle Button at the bottom -->
-        <div class="sidebar-footer">
-            <a href="#" id="sidebarCollapse"><i class="fas fa-angles-left me-2"></i> Thu gọn Menu</a>
-        </div>
+        <ul class="list-unstyled components">
+            <li class="active"><a href="#" class="nav-link" data-view="dashboard"><i class="fas fa-tachometer-alt fa-fw me-3"></i><span>Tổng quan</span></a></li>
+            <li><a href="#" class="nav-link" data-view="orders"><i class="fas fa-file-invoice-dollar fa-fw me-3"></i><span>Đơn hàng</span></a></li>
+            <li><a href="#" class="nav-link" data-view="production"><i class="fas fa-industry fa-fw me-3"></i><span>Sản xuất</span></a></li>
+            <li><a href="#" class="nav-link" data-view="payroll"><i class="fas fa-hand-holding-usd fa-fw me-3"></i><span>Lương</span></a></li>
+            <li><a href="#" class="nav-link" data-view="finance"><i class="fas fa-chart-pie fa-fw me-3"></i><span>Thu - Chi</span></a></li>
+            <li><a href="#" class="nav-link" data-view="products"><i class="fas fa-tags fa-fw me-3"></i><span>Sản phẩm</span></a></li>
+            <li><a href="#" class="nav-link" data-view="inventory"><i class="fas fa-warehouse fa-fw me-3"></i><span>Kho vật tư</span></a></li>
+            <li><a href="#" class="nav-link" data-view="delivery"><i class="fas fa-truck fa-fw me-3"></i><span>Giao hàng</span></a></li>
+            <li>
+                <a href="#settingsSubmenu" data-bs-toggle="collapse" class="nav-link">
+                    <i class="fas fa-cogs fa-fw me-3"></i><span>Cài đặt</span>
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                </a>
+                <ul class="collapse list-unstyled" id="settingsSubmenu">
+                    <li><a href="#" class="nav-link" data-view="master-data"><span>Dữ liệu nguồn</span></a></li>
+                    <li><a href="#" class="nav-link" data-view="users"><span>Người dùng</span></a></li>
+                    <li><a href="#" class="nav-link" data-view="roles"><span>Phân quyền</span></a></li>
+                </ul>
+            </li>
+        </ul>
     </nav>
 
-    <!-- ============================================= -->
-    <!-- PAGE CONTENT (UPDATED HEADER) -->
-    <!-- ============================================= -->
     <div id="content">
-        <!-- HEADER: Logo added, toggle button removed -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white mb-4 shadow-sm rounded">
-            <div class="container-fluid">
-                <!-- User Profile Dropdown -->
-                <div class="ms-auto d-flex align-items-center">
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle me-2 fs-5"></i>Binh Mai
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="#">Đăng xuất</a></li>
-                        </ul>
-                    </div>
-                    <!-- NEW: Logo -->
-                    <a class="navbar-brand ms-3" href="#">
-                        <img src="https://gpems.net/_next/image?url=%2Flogo-ico.png&w=64&q=75" alt="Logo" style="height: 40px;">
-                    </a>
+        <header class="main-header">
+            <div class="d-flex align-items-center gap-2">
+                 <div class="input-group" style="max-width: 400px;">
+                    <span class="input-group-text bg-light border-0"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control bg-light border-0" id="global-search-input" placeholder="Tìm kiếm toàn hệ thống...">
                 </div>
+                <button class="btn btn-outline-secondary flex-shrink-0">
+                    <i class="fas fa-filter"></i>
+                    <span class="d-none d-md-inline ms-2">Lọc nâng cao</span>
+                </button>
             </div>
-        </nav>
 
-      <!-- Main Content Area -->
-
-        <!-- 1. DASHBOARD CONTENT (UPDATED & COMPLETE) -->
-        <div id="dashboard-content" class="main-content active">
-            <!-- === BẮT ĐẦU PHẦN CODE MỚI CHO DASHBOARD === -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4>Dashboard Quản trị</h4>
-            </div>
-        
-            <!-- Nav tabs -->
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
-                        <i class="fas fa-chart-line me-2"></i>Tổng quan Kinh doanh
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="production-analytics-tab" data-bs-toggle="tab" data-bs-target="#production-analytics" type="button" role="tab" aria-controls="production-analytics" aria-selected="false">
-                         <i class="fas fa-cogs me-2"></i>Phân tích Sản xuất
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="finance-analytics-tab" data-bs-toggle="tab" data-bs-target="#finance-analytics" type="button" role="tab" aria-controls="finance-analytics" aria-selected="false">
-                        <i class="fas fa-dollar-sign me-2"></i>Phân tích Tài chính
-                    </button>
-                </li>
-            </ul>
-        
-            <!-- Tab content -->
-            <div class="tab-content pt-3" id="myTabContent">
-                <!-- Tab 1: Business Overview -->
-                <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-                    <div class="row">
-                        <div class="col-lg-3 col-6 mb-4"><div class="card border-start border-primary border-4 shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Doanh thu</h6><h4 class="fw-bold mb-0">256.7M</h4></div></div></div>
-                        <div class="col-lg-3 col-6 mb-4"><div class="card border-start border-danger border-4 shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Chi phí</h6><h4 class="fw-bold mb-0">189.2M</h4></div></div></div>
-                        <div class="col-lg-3 col-6 mb-4"><div class="card border-start border-success border-4 shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Lợi nhuận</h6><h4 class="fw-bold mb-0">67.5M</h4></div></div></div>
-                        <div class="col-lg-3 col-6 mb-4"><div class="card border-start border-warning border-4 shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Công nợ</h6><h4 class="fw-bold mb-0">45.1M</h4></div></div></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-lg-8 mb-4"><div class="card shadow-sm h-100"><div class="card-header bg-light">Xu hướng Doanh thu & Chi phí</div><div class="card-body" style="min-height: 300px;"><canvas id="revenueExpenseChart"></canvas></div></div></div>
-                        <div class="col-lg-4 mb-4"><div class="card shadow-sm h-100"><div class="card-header bg-light">Top Khách hàng theo Doanh thu</div><div class="card-body" style="min-height: 300px;"><canvas id="customerRevenueChart"></canvas></div></div></div>
-                    </div>
-                </div>
-        
-                <!-- Tab 2: Production Analysis -->
-                <div class="tab-pane fade" id="production-analytics" role="tabpanel" aria-labelledby="production-analytics-tab">
-                    <div class="row">
-                        <div class="col-lg-3 col-6 mb-4"><div class="card text-center shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Sản lượng (ngày)</h6><h4 class="fw-bold mb-0">1,850 sp</h4></div></div></div>
-                        <div class="col-lg-3 col-6 mb-4"><div class="card text-center shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Tỷ lệ lỗi (tuần)</h6><h4 class="fw-bold text-danger mb-0">1.2%</h4></div></div></div>
-                        <div class="col-lg-3 col-6 mb-4"><div class="card text-center shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">Hiệu suất TB</h6><h4 class="fw-bold mb-0">155 sp/giờ</h4></div></div></div>
-                        <div class="col-lg-3 col-6 mb-4"><div class="card text-center shadow-sm h-100"><div class="card-body"><h6 class="text-muted small text-uppercase">TG Hoàn thành TB</h6><h4 class="fw-bold mb-0">3.5 ngày</h4></div></div></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-lg-7 mb-4"><div class="card shadow-sm h-100"><div class="card-header bg-light">Phân tích Điểm nghẽn (Số lô đang chờ)</div><div class="card-body" style="min-height: 300px;"><canvas id="bottleneckChart"></canvas></div></div></div>
-                        <div class="col-lg-5 mb-4"><div class="card shadow-sm h-100"><div class="card-header bg-light">Năng suất Nhân viên (Top 5 tuần này)</div><div class="card-body"><table class="table table-borderless table-sm align-middle"><tbody><tr><td>Trần Thị B</td><td style="width: 60%;"><div class="progress"><div class="progress-bar" style="width: 100%">2,540</div></div></td></tr><tr><td>Nguyễn Văn A</td><td><div class="progress"><div class="progress-bar bg-info" style="width: 85%">2,150</div></div></td></tr><tr><td>Lê Văn C</td><td><div class="progress"><div class="progress-bar bg-success" style="width: 70%">1,880</div></div></td></tr><tr><td>Phạm Thị D</td><td><div class="progress"><div class="progress-bar bg-warning" style="width: 65%">1,720</div></div></td></tr><tr><td>Hoàng Văn E</td><td><div class="progress"><div class="progress-bar bg-danger" style="width: 50%">1,550</div></div></td></tr></tbody></table></div></div></div>
-                    </div>
-                </div>
-                
-                <!-- Tab 3: Finance Analytics -->
-                <div class="tab-pane fade" id="finance-analytics" role="tabpanel" aria-labelledby="finance-analytics-tab">
-                    <div class="row">
-                         <div class="col-lg-7 mb-4"><div class="card shadow-sm h-100"><div class="card-header bg-light">Phân bổ Chi phí</div><div class="card-body" style="min-height: 300px;"><canvas id="expenseDistributionChart"></canvas></div></div></div>
-                        <div class="col-lg-5 mb-4"><div class="card shadow-sm h-100"><div class="card-header bg-light">Phân tích Tuổi nợ</div><div class="card-body"><ul class="list-group list-group-flush"><li class="list-group-item d-flex justify-content-between align-items-center">Chưa tới hạn<span class="badge bg-success rounded-pill">150M</span></li><li class="list-group-item d-flex justify-content-between align-items-center">Quá hạn 1-30 ngày<span class="badge bg-warning rounded-pill">35.1M</span></li><li class="list-group-item d-flex justify-content-between align-items-center">Quá hạn 31-60 ngày<span class="badge bg-danger rounded-pill">10M</span></li><li class="list-group-item d-flex justify-content-between align-items-center">Quá hạn >60 ngày<span class="badge bg-dark rounded-pill">0đ</span></li></ul></div></div></div>
-                    </div>
-                </div>
-            </div>
-            <!-- === KẾT THÚC PHẦN CODE MỚI CHO DASHBOARD === -->
-        </div>
-        
-        <!-- 2. ORDERS CONTENT -->
-        <div id="orders-content" class="main-content"><div class="d-flex justify-content-between align-items-center mb-3"><h4>Quản lý Đơn hàng</h4><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal"><i class="fas fa-plus me-2"></i>Tạo Đơn Hàng Mới</button></div><div class="card shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-striped table-hover"><thead><tr><th>Mã ĐH</th><th>Khách hàng</th><th>Ngày nhận</th><th>Trạng thái</th><th>Thành tiền</th><th>Hành động</th></tr></thead><tbody><tr><td>DH-070401</td><td>Cty Thời Trang An Phước</td><td>04/07/2025</td><td><span class="badge bg-warning text-dark">Đang sản xuất</span></td><td>45,600,000đ</td><td><button class="btn btn-sm btn-info" title="Xem chi tiết"><i class="fas fa-eye"></i></button> <button class="btn btn-sm btn-secondary" title="In phiếu"><i class="fas fa-print"></i></button></td></tr><tr><td>DH-070402</td><td>Xưởng may Jean Vina</td><td>04/07/2025</td><td><span class="badge bg-primary">Mới nhận</span></td><td>12,300,000đ</td><td><button class="btn btn-sm btn-info" title="Xem chi tiết"><i class="fas fa-eye"></i></button> <button class="btn btn-sm btn-secondary" title="In phiếu"><i class="fas fa-print"></i></button></td></tr><tr><td>DH-060305</td><td>Blue Exchange</td><td>03/07/2025</td><td><span class="badge bg-success">Hoàn thành</span></td><td>82,150,000đ</td><td><button class="btn btn-sm btn-info" title="Xem chi tiết"><i class="fas fa-eye"></i></button> <button class="btn btn-sm btn-secondary" title="In phiếu"><i class="fas fa-print"></i></button></td></tr></tbody></table></div></div></div></div>
-
-        <!-- 3. PRODUCTION CONTENT -->
-        <div id="production-content" class="main-content"><div class="d-flex justify-content-between align-items-center mb-3"><h4>Theo dõi Sản xuất (Dạng Kanban)</h4><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#barcodeScanModal"><i class="fas fa-barcode me-2"></i>Quét mã lô sản xuất</button></div><div class="kanban-board"><div class="kanban-column"><h5><i class="fas fa-box-open text-secondary me-2"></i>Mới nhận (5)</h5><div class="card kanban-card mb-3 shadow-sm"><div class="card-body"><h6 class="card-title fw-bold">LÔ-0704-A12</h6><p class="card-text mb-1">KH: Xưởng Jean Vina</p><p class="card-text fw-bold">SL: 250 cái</p></div></div></div><div class="kanban-column"><h5><i class="fas fa-tint text-primary me-2"></i>Giặt/Nhuộm (3)</h5><div class="card kanban-card mb-3 shadow-sm"><div class="card-body"><h6 class="card-title fw-bold">LÔ-0703-B05</h6><p class="card-text mb-1">KH: An Phước</p><p class="card-text fw-bold">SL: 500 cái</p></div><div class="card-footer bg-white border-0 py-1"><small class="text-muted">NV: Nguyễn Văn A</small></div></div></div><div class="kanban-column"><h5><i class="fas fa-tshirt text-info me-2"></i>Wash/Ủi (2)</h5><div class="card kanban-card mb-3 shadow-sm"><div class="card-body"><h6 class="card-title fw-bold">LÔ-0702-C11</h6><p class="card-text mb-1">KH: Blue Exchange</p><p class="card-text fw-bold">SL: 300 cái</p></div><div class="card-footer bg-white border-0 py-1"><small class="text-muted">NV: Trần Thị B</small></div></div></div><div class="kanban-column"><h5><i class="fas fa-check-circle text-success me-2"></i>KCS/Hoàn thành (4)</h5><div class="card kanban-card mb-3 shadow-sm bg-light" style="border-left-color: #198754"><div class="card-body"><h6 class="card-title fw-bold">LÔ-0701-D01</h6><p class="card-text mb-1">KH: An Phước</p><p class="card-text fw-bold">SL: 450 cái</p></div></div></div></div></div>
-        
-        <!-- 4. PAYROLL CONTENT -->
-        <div id="payroll-content" class="main-content"><h4>Báo cáo Lương sản phẩm</h4><div class="card mt-3 shadow-sm"><div class="card-header bg-light"><div class="row align-items-end g-3"><div class="col-md-4"><label class="form-label">Chọn nhân viên</label><select class="form-select"><option selected>Tất cả nhân viên</option><option>Nguyễn Văn A</option><option>Trần Thị B</option></select></div><div class="col-md-3"><label class="form-label">Từ ngày</label><input type="date" class="form-control"></div><div class="col-md-3"><label class="form-label">Đến ngày</label><input type="date" class="form-control"></div><div class="col-md-2"><button class="btn btn-primary w-100">Xem Báo Cáo</button></div></div></div><div class="card-body"><div class="row mb-4"><div class="col-md-4"><div class="card text-center"><div class="card-body"><h6 class="card-title text-muted">Tổng Sản Lượng</h6><h3 class="fw-bold">5,430</h3></div></div></div><div class="col-md-4"><div class="card text-center"><div class="card-body"><h6 class="card-title text-muted">Số Công Việc</h6><h3 class="fw-bold">15</h3></div></div></div><div class="col-md-4"><div class="card text-center bg-success text-white"><div class="card-body"><h6 class="card-title">TỔNG LƯƠNG</h6><h3 class="fw-bold">7,850,000đ</h3></div></div></div></div><h5>Chi tiết công việc của: <span class="text-primary">Nguyễn Văn A</span></h5><div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Ngày</th><th>Mã Lô</th><th>Sản phẩm</th><th>Công đoạn</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody><tr><td>03/07/2025</td><td>LÔ-0703-B05</td><td>Áo Sơmi</td><td>Giặt thô</td><td>500</td><td>500đ</td><td>250,000đ</td></tr><tr><td>03/07/2025</td><td>LÔ-0702-C11</td><td>Quần Jean Rách</td><td>Wash rách</td><td>300</td><td>1,500đ</td><td>450,000đ</td></tr><tr><td>04/07/2025</td><td>LÔ-0704-A12</td><td>Quần Jean Nam</td><td>Nhuộm</td><td>250</td><td>2,000đ</td><td>500,000đ</td></tr></tbody></table></div><div class="text-end mt-3"><button class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Xuất Excel</button></div></div></div></div>
-
-        <!-- 5. FINANCE CONTENT -->
-        <div id="finance-content" class="main-content"><h4>Quản lý Thu - Chi</h4><div class="card mt-3 shadow-sm"><div class="card-header bg-light"><div class="row align-items-end g-3"><div class="col-md-3"><label class="form-label">Từ ngày</label><input type="date" class="form-control"></div><div class="col-md-3"><label class="form-label">Đến ngày</label><input type="date" class="form-control"></div><div class="col-md-2"><button class="btn btn-info w-100 text-white">Lọc</button></div></div></div><div class="card-body"><div class="row mb-4 text-center"><div class="col-md-4"><div class="card border-success"><div class="card-body"><h6 class="card-title">TỔNG THU</h6><h3 class="fw-bold text-success">150.5M</h3></div></div></div><div class="col-md-4"><div class="card border-danger"><div class="card-body"><h6 class="card-title">TỔNG CHI</h6><h3 class="fw-bold text-danger">85.2M</h3></div></div></div><div class="col-md-4"><div class="card border-primary"><div class="card-body"><h6 class="card-title">LỢI NHUẬN</h6><h3 class="fw-bold text-primary">65.3M</h3></div></div></div></div><div class="row"><div class="col-md-6"> <div class="d-flex justify-content-between align-items-center mb-2"><h5><i class="fas fa-arrow-down text-success"></i> Dòng tiền vào (Thu)</h5><button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#newIncomeModal"><i class="fas fa-plus"></i> Tạo Phiếu Thu</button></div> <table class="table table-sm table-hover"><thead><tr><th>Ngày</th><th>Nội dung</th><th>Số tiền</th></tr></thead><tbody><tr><td>03/07</td><td>Thanh toán ĐH-060305</td><td>82,150,000đ</td></tr><tr><td>04/07</td><td>Thanh toán ĐH-070402</td><td>12,300,000đ</td></tr></tbody></table></div><div class="col-md-6"><div class="d-flex justify-content-between align-items-center mb-2"><h5><i class="fas fa-arrow-up text-danger"></i> Dòng tiền ra (Chi)</h5><button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#newExpenseModal"><i class="fas fa-plus"></i> Tạo Phiếu Chi</button></div><table class="table table-sm table-hover"><thead><tr><th>Ngày</th><th>Nội dung</th><th>Loại</th><th>Số tiền</th></tr></thead><tbody><tr><td>01/07</td><td>Trả lương T6</td><td>Lương</td><td>(55M)</td></tr><tr><td>02/07</td><td>Mua hóa chất</td><td>Vật tư</td><td>(10.2M)</td></tr><tr><td>05/07</td><td>Tiền điện</td><td>Vận hành</td><td>(5M)</td></tr></tbody></table></div></div></div></div></div>
-
-        <!-- 6. DELIVERY CONTENT -->
-        <div id="delivery-content" class="main-content"><h4>Quản lý Giao hàng</h4><p class="text-muted">Danh sách các đơn hàng đã hoàn thành, sẵn sàng giao cho khách.</p><div class="card mt-3 shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Mã ĐH</th><th>Khách hàng</th><th>Ngày hoàn thành</th><th>Số lượng</th><th>Trạng thái TT</th><th>Hành động</th></tr></thead><tbody><tr class="table-success"><td>DH-060305</td><td>Blue Exchange</td><td>03/07/2025</td><td>2,100</td><td><span class="badge bg-danger">Chưa TT</span></td><td><button class="btn btn-sm btn-primary"><i class="fas fa-shipping-fast me-2"></i>Tạo Phiếu & Giao hàng</button></td></tr><tr><td>DH-060210</td><td>Owen Fashion</td><td>02/07/2025</td><td>800</td><td><span class="badge bg-success">Đã TT</span></td><td><span class="text-muted"><i class="fas fa-check-circle me-2"></i>Đã giao ngày 02/07</span></td></tr><tr class="table-success"><td>DH-060115</td><td>Canifa</td><td>01/07/2025</td><td>1,500</td><td><span class="badge bg-success">Đã TT</span></td><td><button class="btn btn-sm btn-primary"><i class="fas fa-shipping-fast me-2"></i>Tạo Phiếu & Giao hàng</button></td></tr></tbody></table></div></div></div></div>
-    </div>
-</div>
-
-
-        <!-- ============================================= -->
-        <!-- NEW SECTIONS FOR SYSTEM SETTINGS -->
-        <!-- ============================================= -->
-
-        <!-- 7. MASTER DATA CONTENT -->
-        <div id="master-data-content" class="main-content">
-            <h4><i class="fas fa-database me-2"></i>Quản lý Dữ liệu nguồn (Master Data)</h4>
-            <div class="card shadow-sm mt-3">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs">
-                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-customers">Khách hàng</a></li>
-                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-stages">Công đoạn</a></li>
-                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-employees">Nhân viên</a></li>
+            <div class="ms-auto d-flex align-items-center">
+                 <div class="dropdown">
+                    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown"><i class="fas fa-bell fa-fw fs-4 text-secondary"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3<span class="visually-hidden">unread messages</span></span></a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 350px;">
+                        <li class="dropdown-header">Thông báo</li>
+                        <li><a class="dropdown-item d-flex align-items-center" href="#"><div class="me-3"><div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="fas fa-file-alt"></i></div></div><div><div class="small text-gray-500">10/07/2024</div><span class="fw-bold">Đơn hàng DH-07019 sắp trễ hẹn!</span></div></a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-center small text-gray-500" href="#">Xem tất cả thông báo</a></li>
                     </ul>
                 </div>
-                <div class="card-body">
-                    <div class="tab-content">
-                        <div class="tab-pane active" id="tab-customers">
-                            <div class="d-flex justify-content-end mb-3"><button class="btn btn-success"><i class="fas fa-plus me-2"></i>Thêm Khách Hàng</button></div>
-                            <table class="table table-sm table-bordered"><thead><tr><th>Tên Khách hàng</th><th>SĐT</th><th>Địa chỉ</th><th>Hành động</th></tr></thead><tbody><tr><td>Công ty An Phước</td><td>0909123456</td><td>Q.Tân Bình, TPHCM</td><td><button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button></td></tr></tbody></table>
-                        </div>
-                        <div class="tab-pane" id="tab-stages">
-                           <div class="d-flex justify-content-end mb-3"><button class="btn btn-success"><i class="fas fa-plus me-2"></i>Thêm Công Đoạn</button></div>
-                           <table class="table table-sm table-bordered"><thead><tr><th>Tên công đoạn</th><th>Đơn giá lương</th><th>Mô tả</th><th>Hành động</th></tr></thead><tbody><tr><td>Wash rách gối</td><td>1,500đ</td><td>Wash tạo 2 vết rách ở gối theo mẫu</td><td><button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button></td></tr></tbody></table>
-                        </div>
-                        <div class="tab-pane" id="tab-employees">
-                           <div class="d-flex justify-content-end mb-3"><button class="btn btn-success"><i class="fas fa-plus me-2"></i>Thêm Nhân Viên</button></div>
-                           <table class="table table-sm table-bordered"><thead><tr><th>Tên Nhân viên</th><th>Chức vụ</th><th>Ngày vào làm</th><th>Hành động</th></tr></thead><tbody><tr><td>Nguyễn Văn A</td><td>Công nhân Wash</td><td>01/01/2023</td><td><button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button></td></tr></tbody></table>
-                        </div>
-                    </div>
+                <div class="dropdown ms-3">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        <img src="https://i.pravatar.cc/40?u=binhmai" alt="Avatar" width="40" height="40" class="rounded-circle me-2">
+                        <div><strong class="d-block">Binh Mai</strong><small class="text-muted">Admin</small></div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0"><li><a class="dropdown-item" href="#">Hồ sơ</a></li><li><a class="dropdown-item" href="#">Đăng xuất</a></li></ul>
                 </div>
             </div>
-        </div>
-
-        <!-- 8. USERS MANAGEMENT CONTENT -->
-        <div id="users-content" class="main-content">
-            <h4><i class="fas fa-users-cog me-2"></i>Quản lý Người dùng</h4>
-            <div class="card shadow-sm mt-3">
-                 <div class="card-header d-flex justify-content-between align-items-center"><span>Danh sách tài khoản hệ thống</span><button class="btn btn-success"><i class="fas fa-user-plus me-2"></i>Thêm Người Dùng</button></div>
-                 <div class="card-body">
-                    <table class="table table-hover"><thead><tr><th>Tên đăng nhập</th><th>Tên hiển thị</th><th>Vai trò</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody><tr><td>binhmai</td><td>Binh Mai</td><td><span class="badge bg-primary">Admin</span></td><td><span class="badge bg-success">Hoạt động</span></td><td><button class="btn btn-sm btn-secondary" title="Reset mật khẩu"><i class="fas fa-key"></i></button> <button class="btn btn-sm btn-warning" title="Chỉnh sửa"><i class="fas fa-edit"></i></button></td></tr><tr><td>quanly01</td><td>Nguyễn Văn B</td><td><span class="badge bg-info">Quản lý</span></td><td><span class="badge bg-success">Hoạt động</span></td><td><button class="btn btn-sm btn-secondary" title="Reset mật khẩu"><i class="fas fa-key"></i></button> <button class="btn btn-sm btn-warning" title="Chỉnh sửa"><i class="fas fa-edit"></i></button></td></tr><tr><td>nhanvien01</td><td>Trần Thị C</td><td><span class="badge bg-secondary">Nhân viên</span></td><td><span class="badge bg-danger">Khóa</span></td><td><button class="btn btn-sm btn-secondary" title="Reset mật khẩu"><i class="fas fa-key"></i></button> <button class="btn btn-sm btn-warning" title="Chỉnh sửa"><i class="fas fa-edit"></i></button></td></tr></tbody></table>
-                 </div>
-            </div>
-        </div>
-
-        <!-- 9. ROLES & PERMISSIONS CONTENT -->
-        <div id="roles-content" class="main-content">
-             <h4><i class="fas fa-user-shield me-2"></i>Phân quyền & Vai trò</h4>
-             <div class="row mt-3">
-                <div class="col-md-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header">Danh sách Vai trò</div>
-                        <div class="list-group list-group-flush">
-                            <a href="#" class="list-group-item list-group-item-action active" aria-current="true">Admin</a>
-                            <a href="#" class="list-group-item list-group-item-action">Quản lý</a>
-                            <a href="#" class="list-group-item list-group-item-action">Nhân viên</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-8">
-                     <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center"><span>Chi tiết quyền cho vai trò: <span class="fw-bold text-primary">Admin</span></span><button class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu thay đổi</button></div>
-                        <div class="card-body">
-                            <table class="table table-sm table-bordered permission-matrix">
-                                <thead><tr><th>Module</th><th class="text-center">Xem</th><th class="text-center">Thêm</th><th class="text-center">Sửa</th><th class="text-center">Xóa</th></tr></thead>
-                                <tbody>
-                                    <tr><th>Đơn hàng</th><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td></tr>
-                                    <tr><th>Sản xuất</th><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" disabled></td></tr>
-                                    <tr><th>Lương & Thu chi</th><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox"></td></tr>
-                                    <tr><th>Cài đặt hệ thống</th><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                     </div>
-                </div>
-             </div>
-        </div>
-
+        </header>
+        <main id="main-content-area" class="p-3 p-md-4"></main>
     </div>
 </div>
 
-<!-- All modals are preserved from the previous version -->
-<div class="modal fade" id="newOrderModal" tabindex="-1">...Modal Tạo đơn hàng mới...</div>
-<div class="modal fade" id="barcodeScanModal" tabindex="-1">...Modal Quét Barcode...</div>
-<div class="modal fade" id="newIncomeModal" tabindex="-1">...Modal Tạo Phiếu Thu...</div>
-<div class="modal fade" id="newExpenseModal" tabindex="-1">...Modal Tạo Phiếu Chi...</div>
+<!-- MODALS -->
+<!-- Order Modal -->
+<div class="modal fade" id="order-modal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="orderModalLabel">Tạo/Cập nhật Đơn hàng</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body">
+                <form id="order-form">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label for="customerName" class="form-label">Khách hàng</label><select id="customerName" class="form-select"><option selected>Chọn khách hàng...</option><option>An Phước</option><option>Owen Fashion</option></select></div>
+                        <div class="col-md-6"><label for="orderStatus" class="form-label">Trạng thái</label><select id="orderStatus" class="form-select"><option class="text-primary">Mới nhận</option><option class="text-warning">Đang sản xuất</option></select></div>
+                        <div class="col-md-6"><label for="orderDate" class="form-label">Ngày nhận</label><input type="date" class="form-control" id="orderDate" value="2025-07-04"></div>
+                        <div class="col-md-6"><label for="deliveryDate" class="form-label">Hạn giao hàng</label><input type="date" class="form-control" id="deliveryDate" value="2025-07-15"></div>
+                        <div class="col-12"><hr><h6>Chi tiết Sản phẩm</h6><div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Sản phẩm</th><th style="width: 120px;">Số lượng</th><th style="width: 150px;">Đơn giá</th><th style="width: 180px;">Thành tiền</th><th style="width: 50px;"></th></tr></thead><tbody><tr><td><input type="text" class="form-control form-control-sm" value="Quần Jean Nam QJ-01"></td><td><input type="number" class="form-control form-control-sm" value="500"></td><td><input type="number" class="form-control form-control-sm" value="35000"></td><td><input type="text" class="form-control form-control-sm" value="17,500,000" readonly></td><td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button></td></tr></tbody></table></div><button type="button" class="btn btn-sm btn-outline-primary"><i class="fas fa-plus me-1"></i>Thêm dòng</button></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button type="button" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu đơn hàng</button></div>
+        </div>
+    </div>
+</div>
 
-<!-- ============================================= -->
-<!-- JAVASCRIPT LIBRARIES & CUSTOM SCRIPT (UPDATED) -->
-<!-- ============================================= -->
+<!-- Production Scan Modal -->
+<div class="modal fade" id="scan-modal" tabindex="-1" aria-labelledby="scanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="scanModalLabel"><i class="fas fa-barcode me-2"></i>Ghi Nhật Ký Sản Xuất</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <div class="col-md-5"><h6>Camera Scan</h6><video id="scan-camera-feed" autoplay playsinline muted></video><div class="d-grid mt-2"><button class="btn btn-outline-primary"><i class="fas fa-camera me-2"></i>Bắt đầu quét</button></div></div>
+                    <div class="col-md-7"><h6>Thông tin Cập nhật</h6><div class="mb-3"><label class="form-label">Mã Lô/Đơn hàng</label><input type="text" class="form-control" value="LÔ-0704-A12" readonly></div><div class="mb-3"><label class="form-label">Khách hàng / Sản phẩm</label><input type="text" class="form-control" value="Jean Vina / Quần Jean Nam QJ-01" readonly></div><div class="mb-3"><label for="productionStage" class="form-label">Công đoạn</label><select id="productionStage" class="form-select"><option>Giặt/Nhuộm</option><option>Wash/Ủi</option></select></div><div class="row g-3"><div class="col-sm-6"><label for="actualQty" class="form-label">Số lượng thực tế</label><input type="number" class="form-control" id="actualQty" value="250"></div><div class="col-sm-6"><label for="defectiveQty" class="form-label">Số lượng hư</label><input type="number" class="form-control text-danger" id="defectiveQty" value="3"></div></div><div class="mt-3"><label for="operatorName" class="form-label">Người thực hiện</label><input type="text" class="form-control" id="operatorName" value="Binh Mai" readonly></div></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="button" class="btn btn-success"><i class="fas fa-check me-2"></i>Lưu Nhật Ký</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Delivery Modal -->
+<div class="modal fade" id="delivery-modal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="deliveryModalLabel">Tạo Phiếu Giao Hàng</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Từ Đơn hàng / Lô SX</label><select class="form-select"><option selected>LÔ-0702-C11 - Blue Exchange</option><option>LÔ-0701-D01 - An Phước</option></select></div>
+                        <div class="col-md-6"><label class="form-label">Người giao</label><input type="text" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">Địa chỉ giao</label><input type="text" class="form-control" value="123 Đường ABC, Phường X, Quận Y, TP.HCM"></div>
+                        <div class="col-12"><label class="form-label">Chi tiết hàng hóa</label><input type="text" class="form-control" value="Áo Thun (SL: 300)" readonly></div>
+                        <div class="col-12"><label class="form-label">Ghi chú giao hàng</label><textarea class="form-control" rows="2"></textarea></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="button" class="btn btn-primary"><i class="fas fa-shipping-fast me-2"></i>Xác nhận Giao hàng</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Modal -->
+<div class="modal fade" id="customer-modal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="customerModalLabel">Thêm/Sửa Khách Hàng</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Mã khách hàng</label><input type="text" class="form-control" placeholder="Hệ thống tự tạo..."></div>
+                        <div class="col-md-6"><label class="form-label">Tên công ty</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Mã số thuế</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Người liên hệ</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Số điện thoại</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">Địa chỉ</label><input type="text" class="form-control"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button type="button" class="btn btn-primary">Lưu</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal fade" id="user-modal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="userModalLabel">Thêm/Sửa Người Dùng</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Tên hiển thị</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Tên đăng nhập</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Số điện thoại</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Phòng ban</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Chức vụ</label><input type="text" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Vai trò</label><select class="form-select"><option>Admin</option><option>Quản lý</option><option>Nhân viên</option></select></div>
+                        <div class="col-md-6"><label class="form-label">Trạng thái</label><select class="form-select"><option value="1">Hoạt động</option><option value="0">Khóa</option></select></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button type="button" class="btn btn-primary">Lưu</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Finance Modal -->
+<div class="modal fade" id="finance-modal" tabindex="-1" aria-labelledby="financeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="financeModalLabel">Tạo Phiếu</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Ngày</label><input type="date" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Số tiền</label><input type="number" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label">Hạng mục</label><select class="form-select"><option>Thanh toán ĐH</option><option>Chi phí vật tư</option></select></div>
+                        <div class="col-md-6"><label class="form-label" id="finance-entity-label">Khách hàng</label><select class="form-select"><option>Blue Exchange</option><option>Nhà cung cấp Hóa Chất ABC</option></select></div>
+                        <div class="col-12"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="3"></textarea></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button type="button" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu Phiếu</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Role Modal -->
+<div class="modal fade" id="role-modal" tabindex="-1" aria-labelledby="roleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="roleModalLabel">Thêm/Sửa Vai Trò</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3"><label for="roleName" class="form-label">Tên Vai Trò</label><input type="text" id="roleName" class="form-control"></div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button type="button" class="btn btn-primary">Lưu</button></div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // --- Sidebar & Navigation Logic (UPDATED) ---
     const sidebar = document.getElementById('sidebar');
-    const sidebarCollapse = document.getElementById('sidebarCollapse');
-    const navLinks = document.querySelectorAll('#sidebar .nav-link');
-    const mainContents = document.querySelectorAll('.main-content');
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const mainContentArea = document.getElementById('main-content-area');
+    let bsTooltipList = [];
 
-    if(sidebarCollapse) {
-        sidebarCollapse.addEventListener('click', (e) => {
-            e.preventDefault();
-            sidebar.classList.toggle('active');
-            const icon = sidebarCollapse.querySelector('i');
-            const text = sidebarCollapse.childNodes[1]; // Get the text node
-            if (sidebar.classList.contains('active')) {
-                icon.classList.remove('fa-angles-left');
-                icon.classList.add('fa-angles-right');
-                text.textContent = ' Mở rộng';
+    const searchPlaceholders = {
+        dashboard: 'Tìm kiếm trong tổng quan...',
+        orders: 'Tìm kiếm theo mã ĐH, tên khách, sản phẩm...',
+        production: 'Tìm kiếm lô sản xuất, mã đơn hàng...',
+        payroll: 'Tìm kiếm theo nhân viên, công đoạn...',
+        finance: 'Tìm kiếm phiếu thu, chi, khách hàng...',
+        delivery: 'Tìm kiếm phiếu giao, mã ĐH, khách hàng...',
+        'master-data': 'Tìm kiếm dữ liệu nguồn...',
+        users: 'Tìm kiếm người dùng theo tên, email...',
+        roles: 'Tìm kiếm vai trò, quyền...'
+    };
+    
+    const viewTemplates = {
+        dashboard: `
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4"><label class="form-label">Trạng thái</label><select class="form-select"><option selected>Tất cả cảnh báo</option><option>Cần xử lý</option><option>Trễ hẹn</option></select></div>
+                        <div class="col-md-3"><label class="form-label">Từ ngày</label><input type="date" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Đến ngày</label><input type="date" class="form-control"></div>
+                        <div class="col-md-2"><button class="btn btn-primary w-100">Lọc</button></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 mb-4"><div class="card shadow-sm border-0"><div class="card-body"><h5 class="card-title text-primary">Cảnh báo & Việc cần làm</h5><div class="list-group list-group-flush"><a href="#" class="list-group-item list-group-item-action d-flex align-items-center text-danger"><i class="fas fa-exclamation-triangle fa-fw me-3"></i> <strong>Đơn hàng DH-07019 sắp trễ hẹn!</strong> <small class="ms-auto">còn 1 ngày</small></a><a href="#" class="list-group-item list-group-item-action d-flex align-items-center text-warning"><i class="fas fa-dolly fa-fw me-3"></i> <strong>Vật tư 'Hóa chất A' sắp hết.</strong> <small class="ms-auto">còn 10 lít</small></a></div></div></div></div>
+            </div>
+            <div class="row">
+                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start border-primary border-4 h-100 shadow-sm"><div class="card-body"><h6 class="text-muted small text-uppercase mb-2">Doanh thu (Tháng)</h6><h4 class="fw-bold mb-0">256.7M</h4></div></div></div>
+                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start border-success border-4 h-100 shadow-sm"><div class="card-body"><h6 class="text-muted small text-uppercase mb-2">Sản lượng (Ngày)</h6><h4 class="fw-bold mb-0">1,850 sp</h4></div></div></div>
+                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start border-info border-4 h-100 shadow-sm"><div class="card-body"><h6 class="text-muted small text-uppercase mb-2">Đơn hàng mới</h6><h4 class="fw-bold mb-0">12</h4></div></div></div>
+                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-start border-danger border-4 h-100 shadow-sm"><div class="card-body"><h6 class="text-muted small text-uppercase mb-2">Hàng lỗi (Tuần)</h6><h4 class="fw-bold mb-0">23 sp (1.2%)</h4></div></div></div>
+            </div>
+            <div class="row"><div class="col-lg-7 mb-4"><div class="card shadow-sm h-100"><div class="card-header">Xu hướng Doanh thu & Chi phí</div><div class="card-body" style="min-height: 300px;"><canvas id="revenueExpenseChart"></canvas></div></div></div><div class="col-lg-5 mb-4"><div class="card shadow-sm h-100"><div class="card-header">Top Khách hàng</div><div class="card-body" style="min-height: 300px;"><canvas id="customerRevenueChart"></canvas></div></div></div></div>`,
+        
+        orders: `<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2"><h3>Quản lý Đơn hàng</h3><div class="ms-auto"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#order-modal"><i class="fas fa-plus me-2"></i>Tạo Đơn Hàng Mới</button></div></div><div class="card shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Mã ĐH</th><th>Khách hàng</th><th>Sản phẩm</th><th>Số lượng</th><th>Hạn giao</th><th>Trạng thái</th><th class="text-end">Thành tiền</th><th class="text-center">Hành động</th></tr></thead><tbody>
+<tr><td>DH-070401</td><td>An Phước</td><td>Quần Jean</td><td class="text-center">500</td><td>15/07/2025</td><td><span class="badge bg-warning text-dark">Đang sản xuất</span></td><td class="text-end">17.5M</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button></div></td></tr>
+<tr><td>DH-070402</td><td>Owen</td><td>Áo Thun</td><td class="text-center">300</td><td>16/07/2025</td><td><span class="badge bg-primary">Mới nhận</span></td><td class="text-end">7.5M</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button></div></td></tr>
+<tr><td>DH-070403</td><td>Blue Exchange</td><td>Áo Khoác</td><td class="text-center">200</td><td>18/07/2025</td><td><span class="badge bg-success">Hoàn thành</span></td><td class="text-end">10M</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button></div></td></tr>
+<tr><td>DH-070404</td><td>Jean Vina</td><td>Quần Tây</td><td class="text-center">400</td><td>19/07/2025</td><td><span class="badge bg-warning text-dark">Đang sản xuất</span></td><td class="text-end">12M</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button></div></td></tr>
+<td>Quần Jean, Áo Thun</td><td class="text-center">700</td><td>15/07/2025</td><td><span class="badge bg-warning text-dark">Đang sản xuất</span></td><td class="text-end">45.6M</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#order-modal" title="Sửa"><i class="fas fa-edit"></i></button><button class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="In phiếu"><i class="fas fa-print"></i></button></div></td></tr></tbody></table></div></div></div>`,
+        
+        production: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Quản lý Sản xuất</h3></div>
+            <div class="card shadow-sm">
+                 <div class="card-header"><ul class="nav nav-tabs card-header-tabs"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-plan">Kế hoạch Sản xuất</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-log">Nhật ký Sản xuất</a></li></ul></div>
+                 <div class="card-body">
+                    <div class="tab-content pt-3">
+                        <div class="tab-pane active" id="tab-plan">
+                            <div class="kanban-container">
+                                <div class="kanban-column"><h5><i class="fas fa-box-open text-secondary me-2"></i>Mới nhận</h5><div class="card my-2 kanban-card"><div class="card-body p-3"><h6 class="fw-bold mb-1">LÔ-0704-A12</h6><small>KH: Jean Vina | SL: 250</small></div><div class="card-footer text-center"><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#scan-modal"><i class="fas fa-edit me-1"></i> Ghi nhật ký</button></div></div></div>
+                                <div class="kanban-column"><h5><i class="fas fa-tint text-primary me-2"></i>Giặt/Nhuộm</h6><div class="card my-2 kanban-card"><div class="card-body p-3"><h6 class="fw-bold mb-1">LÔ-0703-B05</h6><small>KH: An Phước | SL: 500</small></div><div class="card-footer text-center"><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#scan-modal"><i class="fas fa-edit me-1"></i> Ghi nhật ký</button></div></div></div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab-log">
+                            <h5 class="mb-3">Lịch sử ghi nhận sản xuất</h5>
+                            <div class="table-responsive"><table class="table table-sm table-bordered table-striped"><thead><th>Ngày giờ</th><th>Nhân viên</th><th>Mã Lô</th><th>Công đoạn</th><th class="text-end">SL Thực tế</th><th class="text-end">SL Hư</th></tr></thead>
+                            <tbody>
+                                <tr><td>05/07 10:30</td><td>Nguyễn Văn A</td><td>LÔ-0703-B05</td><td>Giặt thô</td><td class="text-end">250</td><td class="text-end">2</td></tr>
+                                <tr><td>05/07 14:00</td><td>Trần Thị B</td><td>LÔ-0703-B05</td><td>Giặt thô</td><td class="text-end">250</td><td class="text-end">1</td></tr>
+                                <tr><td>04/07 08:15</td><td>Lê Văn C</td><td>LÔ-0704-A12</td><td>Nhuộm</td><td class="text-end">250</td><td class="text-end">3</td></tr>
+                            </tbody></table></div>
+                        </div>
+                    </div>
+                 </div>
+            </div>`,
+        
+        payroll: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Báo cáo Lương sản phẩm</h3><button class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Xuất Báo Cáo Excel</button></div><div class="card shadow-sm"><div class="card-header"><div class="row align-items-end g-3"><div class="col-md-4"><label class="form-label">Chọn nhân viên</label><select class="form-select"><option selected>Tất cả</option></select></div><div class="col-md-3"><label class="form-label">Từ ngày</label><input type="date" class="form-control"></div><div class="col-md-3"><label class="form-label">Đến ngày</label><input type="date" class="form-control"></div><div class="col-md-2"><button class="btn btn-primary w-100">Lọc</button></div></div></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Ngày</th><th>Nhân viên</th><th>Mã Lô</th><th>Công đoạn</th><th class="text-end">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr></thead><tbody><tr><td>03/07</td><td>Nguyễn Văn A</td><td>LÔ-0703-B05</td><td>Giặt thô</td><td class="text-end">500</td><td class="text-end">500đ</td><td class="text-end">250,000đ</td></tr></tbody></table></div></div></div>`,
+        
+        finance: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Quản lý Thu - Chi</h3></div>
+            <div class="card shadow-sm">
+                <div class="card-header"><ul class="nav nav-tabs card-header-tabs"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-thu">Phiếu Thu</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-chi">Phiếu Chi</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-tonghop">Tổng hợp</a></li></ul></div>
+                <div class="card-body">
+                    <div class="tab-content pt-3">
+                        <div class="tab-pane active" id="tab-thu"><div class="d-flex justify-content-end mb-3"><button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#finance-modal" data-type="receipt"><i class="fas fa-plus me-2"></i>Tạo phiếu Thu</button></div><div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Ngày</th><th>Hạng mục</th><th>Khách hàng</th><th>Người lập</th><th class="text-end">Số tiền</th><th class="text-center">Hành động</th></tr></thead><tbody><tr><td>03/07</td><td>Thanh toán ĐH</td><td>Blue Exchange</td><td>ketoan01</td><td class="text-end">82.1M</td><td class="text-center"><button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#finance-modal" data-type="receipt"><i class="fas fa-edit"></i></button></td></tr></tbody></table></div></div>
+                        <div class="tab-pane" id="tab-chi"><div class="d-flex justify-content-end mb-3"><button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#finance-modal" data-type="payment"><i class="fas fa-plus me-2"></i>Tạo phiếu Chi</button></div><div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Ngày</th><th>Hạng mục</th><th>Nhà CC</th><th>Người lập</th><th class="text-end">Số tiền</th><th class="text-center">Hành động</th></tr></thead><tbody><tr><td>02/07</td><td>Chi phí vật tư</td><td>Hóa chất ABC</td><td>quanly01</td><td class="text-end">(10.2M)</td><td class="text-center"><button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#finance-modal" data-type="payment"><i class="fas fa-edit"></i></button></td></tr></tbody></table></div></div>
+                        <div class="tab-pane" id="tab-tonghop"><h5 class="mb-3">Tổng hợp trong kỳ</h5><div class="row mt-3"><div class="col-md-4"><div class="card text-center text-bg-success"><div class="card-header">TỔNG THU</div><div class="card-body fs-4 fw-bold">94.4M</div></div></div><div class="col-md-4"><div class="card text-center text-bg-danger"><div class="card-header">TỔNG CHI</div><div class="card-body fs-4 fw-bold">(65.2M)</div></div></div><div class="col-md-4"><div class="card text-center text-bg-primary"><div class="card-header">LỢI NHUẬN</div><div class="card-body fs-4 fw-bold">29.2M</div></div></div></div></div>
+                    </div>
+                </div>
+            </div>`,
+        
+        delivery: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Quản lý Giao hàng</h3><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#delivery-modal"><i class="fas fa-shipping-fast me-2"></i>Tạo Phiếu Giao Hàng</button></div><div class="card shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Mã Lô</th><th>Sản phẩm</th><th>Khách hàng</th><th class="text-end">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th><th>Người giao</th><th class="text-center">Trạng thái</th></tr></thead><tbody>
+<tr><td>LÔ-0701-D01</td><td>Quần Jean</td><td>An Phước</td><td class="text-end">500</td><td class="text-end">35,000</td><td class="text-end">17.5M</td><td>Nguyễn Văn Giao</td><td class="text-center"><span class="text-muted"><i class="fas fa-check-circle me-2"></i>Đã giao</span></td></tr>
+<tr class="table-light"><td>LÔ-0702-C11</td><td>Áo Thun</td><td>Owen</td><td class="text-end">300</td><td class="text-end">25,000</td><td class="text-end">7.5M</td><td>--</td><td class="text-center"><span class="badge bg-warning text-dark">Chờ giao</span></td></tr>
+<tr><td>LÔ-0703-B05</td><td>Áo Khoác</td><td>Blue Exchange</td><td class="text-end">200</td><td class="text-end">50,000</td><td class="text-end">10M</td><td>Nguyễn Thị G</td><td class="text-center"><span class="text-muted"><i class="fas fa-check-circle me-2"></i>Đã giao</span></td></tr>
+<tr class="table-light"><td>LÔ-0704-A12</td><td>Quần Tây</td><td>Jean Vina</td><td class="text-end">400</td><td class="text-end">30,000</td><td class="text-end">12M</td><td>--</td><td class="text-center"><span class="badge bg-warning text-dark">Chờ giao</span></td></tr>
+<td>An Phước</td><td class="text-end">450</td><td class="text-end">35,000</td><td class="text-end">15.75M</td><td>Nguyễn Văn Giao</td><td class="text-center"><span class="text-muted"><i class="fas fa-check-circle me-2"></i>Đã giao</span></td></tr><tr class="table-light"><td>LÔ-0702-C11</td><td>Áo Thun</td><td>Blue Exchange</td><td class="text-end">300</td><td class="text-end">25,000</td><td class="text-end">7.5M</td><td>N/A</td><td class="text-center"><span class="badge bg-warning text-dark">Chờ giao</span></td></tr></tbody></table></div></div></div>`,
+        
+        'master-data': `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Dữ liệu nguồn</h3></div><div class="card shadow-sm"><div class="card-header"><ul class="nav nav-tabs card-header-tabs"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-customers">Khách hàng</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-stages">Công đoạn</a></li></ul></div><div class="card-body"><div class="tab-content pt-3"><div class="tab-pane active" id="tab-customers"><div class="d-flex justify-content-end mb-3"><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#customer-modal"><i class="fas fa-plus me-2"></i>Thêm Khách hàng</button></div><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Mã KH</th><th>Tên công ty</th><th>MST</th><th>Người liên hệ</th><th>SĐT</th><th class="text-center">Hành động</th></tr></thead><tbody><tr><td>AP-001</td><td>An Phước</td><td>03...</td><td>Anh Minh</td><td>0909...</td><td class="text-center"><button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#customer-modal"><i class="fas fa-edit"></i></button></td></tr></tbody></table></div></div><div class="tab-pane" id="tab-stages"><div class="d-flex justify-content-end mb-3"><button class="btn btn-sm btn-primary"><i class="fas fa-plus me-2"></i>Thêm Công đoạn</button></div><table class="table table-sm"><thead><tr><th>Tên công đoạn</th><th class="text-end">Đơn giá</th></tr></thead><tbody><tr><td>Giặt thô</td><td class="text-end">500đ</td></tr></tbody></table></div></div></div></div>`,
+        
+        users: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Quản lý Người Dùng</h3><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#user-modal"><i class="fas fa-user-plus me-2"></i>Thêm mới</button></div><div class="card shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Tên hiển thị</th><th>Email</th><th>SĐT</th><th>Chức vụ</th><th>Vai trò</th><th>Trạng thái</th><th class="text-center">Hành động</th></tr></thead><tbody><tr><td>Binh Mai</td><td>binh.mai@email.com</td><td>098...</td><td>Giám đốc</td><td><span class="badge bg-primary">Admin</span></td><td><span class="badge bg-success">Hoạt động</span></td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#user-modal" title="Sửa"><i class="fas fa-edit"></i></button></div></td></tr></tbody></table></div></div></div>`,
+        
+        inventory: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Quản lý Kho vật tư</h3><button class="btn btn-primary"><i class="fas fa-plus me-2"></i>Thêm vật tư</button></div><div class="card shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Mã VT</th><th>Tên vật tư</th><th>ĐVT</th><th>Số lượng</th><th class="text-center">Hành động</th></tr></thead><tbody><tr><td>VT-001</td><td>Hóa chất A</td><td>Lít</td><td>120</td><td class="text-center"><button class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></button></td></tr></tbody></table></div></div></div>`,
+        products: `<div class="d-flex justify-content-between align-items-center mb-4"><h3>Danh mục Sản phẩm</h3><button class="btn btn-primary"><i class="fas fa-plus me-2"></i>Thêm sản phẩm</button></div><div class="card shadow-sm"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Mã SP</th><th>Tên sản phẩm</th><th>Đơn giá</th><th>Đơn vị</th><th class="text-center">Hành động</th></tr></thead><tbody><tr><td>SP-001</td><td>Quần Jean Nam QJ-01</td><td>35,000</td><td>Cái</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button><button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button></div></td></tr><tr><td>SP-002</td><td>Áo Thun Trơn</td><td>25,000</td><td>Cái</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button><button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button></div></td></tr><tr><td>SP-003</td><td>Áo Khoác Kaki</td><td>50,000</td><td>Cái</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button><button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button></div></td></tr><tr><td>SP-004</td><td>Quần Tây Nam</td><td>30,000</td><td>Cái</td><td class="text-center"><div class="btn-group btn-group-sm"><button class="btn btn-outline-warning"><i class="fas fa-edit"></i></button><button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button></div></td></tr></tbody></table></div></div></div>`,
+
+        roles: `<h3 class="mb-4">Phân quyền & Vai trò</h3><div class="row"><div class="col-md-5"><div class="card shadow-sm"><div class="card-header d-flex justify-content-between align-items-center"><span>Danh sách Vai trò</span><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#role-modal"><i class="fas fa-plus"></i></button></div><div class="list-group list-group-flush" id="role-list"><a href="#" class="list-group-item list-group-item-action active d-flex justify-content-between align-items-center" data-role="Admin">Admin <button class="btn btn-sm btn-outline-warning border-0" data-bs-toggle="modal" data-bs-target="#role-modal"><i class="fas fa-edit"></i></button></a><a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-role="Quản lý">Quản lý <button class="btn btn-sm btn-outline-warning border-0" data-bs-toggle="modal" data-bs-target="#role-modal"><i class="fas fa-edit"></i></button></a></div></div></div><div class="col-md-7"><div class="card shadow-sm"><div class="card-header">Quyền cho vai trò: <strong class="text-primary" id="current-role-name">Admin</strong></div><div class="card-body"><table class="table table-sm table-bordered align-middle"><thead><tr><th>Module</th><th class="text-center">Xem</th><th class="text-center">Thêm</th><th class="text-center">Sửa</th><th class="text-center">Xóa</th></tr></thead><tbody><tr><td>Đơn hàng</td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td></tr><tr><td>Sản xuất</td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" checked></td><td class="text-center"><input class="form-check-input" type="checkbox" disabled></td></tr></tbody></table><div class="text-end mt-3"><button class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu thay đổi</button></div></div></div></div></div>`,
+    };
+
+    function initializeTooltips() {
+        if (bsTooltipList.length) { bsTooltipList.forEach(tooltip => tooltip.dispose()); }
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        bsTooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }
+
+    function renderView(viewId) {
+        document.getElementById('global-search-input').placeholder = searchPlaceholders[viewId] || 'Tìm kiếm...';
+        mainContentArea.innerHTML = viewTemplates[viewId] || `<h3 class="text-center p-5">Chức năng đang được phát triển...</h3>`;
+        mainContentArea.classList.remove('active');
+        void mainContentArea.offsetWidth;
+        mainContentArea.classList.add('active');
+
+        if (viewId === 'dashboard') {
+            const chartConfigs = [
+                { id: 'revenueExpenseChart', type: 'line', data: { labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'], datasets: [{ label: 'Doanh thu', data: [50, 65, 72, 68, 80, 95], borderColor: '#0d6efd', tension: 0.3 }, { label: 'Chi phí', data: [40, 45, 55, 48, 60, 65], borderColor: '#dc3545', tension: 0.3 }]}},
+                { id: 'customerRevenueChart', type: 'doughnut', data: { labels: ['An Phước', 'Blue Exchange', 'Jean Vina', 'Khác'], datasets: [{ data: [120, 82, 45, 9], backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#6c757d'] }]}},
+            ];
+            chartConfigs.forEach(config => {
+                const ctx = document.getElementById(config.id);
+                if (ctx) new Chart(ctx, { type: config.type, data: config.data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }}}});
+            });
+        }
+        initializeTooltips();
+    }
+    
+    function setActiveLink(targetLink) {
+        document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
+        if (targetLink) {
+             const parentLi = targetLink.closest('li');
+            parentLi.classList.add('active');
+            const submenu = targetLink.closest('.collapse');
+            if (submenu) {
+                const collapseTrigger = document.querySelector(`a[href="#${submenu.id}"]`);
+                if(collapseTrigger) {
+                    collapseTrigger.closest('li').classList.add('active');
+                    if(!submenu.classList.contains('show')) { new bootstrap.Collapse(submenu).show(); }
+                }
+            }
+        }
+    }
+
+    sidebarToggleBtn.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
+
+    sidebar.addEventListener('click', (e) => {
+        const link = e.target.closest('.nav-link');
+        if (link && link.dataset.view) {
+             e.preventDefault();
+             renderView(link.dataset.view);
+             setActiveLink(link);
+        }
+    });
+    
+    // Dynamic modal listener for Finance Modal
+    const financeModal = document.getElementById('finance-modal');
+    if(financeModal) {
+        financeModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const type = button.getAttribute('data-type');
+            const modalTitle = financeModal.querySelector('.modal-title');
+            const entityLabel = financeModal.querySelector('#finance-entity-label');
+
+            if (type === 'receipt') {
+                modalTitle.textContent = 'Tạo Phiếu Thu';
+                entityLabel.textContent = 'Khách hàng';
             } else {
-                icon.classList.remove('fa-angles-right');
-                icon.classList.add('fa-angles-left');
-                text.textContent = ' Thu gọn Menu';
+                modalTitle.textContent = 'Tạo Phiếu Chi';
+                entityLabel.textContent = 'Nhà Cung Cấp / Nội dung chi';
             }
         });
     }
 
-    navLinks.forEach(link => {
-        link.addEventListener('click', function (e) {
+    // Dynamic listener for Roles page
+    mainContentArea.addEventListener('click', e => {
+        const roleLink = e.target.closest('#role-list a');
+        if (roleLink) {
             e.preventDefault();
-            
-            // Allow default behavior for collapse toggles
-            if(this.getAttribute('data-bs-toggle') === 'collapse') return;
-
-            const targetId = this.getAttribute('data-target');
-            if (!document.querySelector(targetId)) return;
-            
-            navLinks.forEach(l => l.parentElement.classList.remove('active'));
-            // Set active on the direct parent `li`
-            this.parentElement.classList.add('active');
-            // If inside a submenu, also set the main dropdown parent to active
-            if(this.closest('.collapse')) {
-                 this.closest('.collapse').previousElementSibling.parentElement.classList.add('active');
-            }
-
-            mainContents.forEach(content => content.classList.remove('active'));
-            document.querySelector(targetId).classList.add('active');
-        });
+            document.querySelector('#current-role-name').textContent = roleLink.dataset.role;
+            document.querySelectorAll('#role-list a').forEach(a => a.classList.remove('active'));
+            roleLink.classList.add('active');
+        }
     });
 
-    // --- Chart.js Initialization for Dashboard (NO CHANGE) ---
-    Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
-    const revenueExpenseChartCtx = document.getElementById('revenueExpenseChart');
-    if (revenueExpenseChartCtx) { new Chart(revenueExpenseChartCtx, { type: 'line', data: { labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'], datasets: [ { label: 'Doanh thu (triệu)', data: [50.5, 65.2, 72.1, 68.9], borderColor: '#0d6efd', backgroundColor: '#0d6efd', tension: 0.3 }, { label: 'Chi phí (triệu)', data: [40.1, 45.8, 55.3, 48.0], borderColor: '#dc3545', backgroundColor: '#dc3545', tension: 0.3 } ] }, options: { responsive: true, maintainAspectRatio: false } }); }
-    const customerRevenueChartCtx = document.getElementById('customerRevenueChart');
-    if (customerRevenueChartCtx) { new Chart(customerRevenueChartCtx, { type: 'doughnut', data: { labels: ['An Phước', 'Blue Exchange', 'Jean Vina', 'Khác'], datasets: [{ label: 'Doanh thu (triệu)', data: [120, 82, 45, 9], backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#6c757d'] }] }, options: { responsive: true, maintainAspectRatio: false } }); }
-    const bottleneckChartCtx = document.getElementById('bottleneckChart');
-    if (bottleneckChartCtx) { new Chart(bottleneckChartCtx, { type: 'bar', data: { labels: ['Chờ nhận', 'Đang giặt', 'Đang wash', 'Đang ủi', 'Chờ KCS'], datasets: [{ label: 'Số lô hàng', data: [5, 3, 8, 2, 4], backgroundColor: ['#6c757d', '#0dcaf0', '#dc3545', '#0d6efd', '#ffc107'] }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } }); }
-    const expenseDistributionChartCtx = document.getElementById('expenseDistributionChart');
-    if (expenseDistributionChartCtx) { new Chart(expenseDistributionChartCtx, { type: 'pie', data: { labels: ['Lương', 'Nguyên vật liệu', 'Điện, nước', 'Mặt bằng', 'Khác'], datasets: [{ label: 'Chi phí (triệu)', data: [90, 45, 15, 30, 9.2], backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d'] }] }, options: { responsive: true, maintainAspectRatio: false } }); }
+    
+        const saveOrderBtn = document.querySelector('#order-modal .btn-primary');
+        if (saveOrderBtn) {
+            saveOrderBtn.addEventListener('click', () => {
+                saveOrderBtn.disabled = true;
+                saveOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang lưu...';
+                setTimeout(() => {
+                    const toast = new bootstrap.Toast(document.getElementById('successToast'));
+                    toast.show();
+                    saveOrderBtn.disabled = false;
+                    saveOrderBtn.innerHTML = '<i class="fas fa-save me-2"></i>Lưu đơn hàng';
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('order-modal'));
+                    modal.hide();
+                }, 1000);
+            });
+        }
+
+    // Initial Load
+    const initialView = 'dashboard';
+    renderView(initialView);
+    setActiveLink(document.querySelector(`#sidebar .nav-link[data-view="${initialView}"]`));
 });
 </script>
 
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+  <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        💾 Đã lưu thành công!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
